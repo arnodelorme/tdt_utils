@@ -1,0 +1,4 @@
+delta 0 4
+theta 4 8 
+alpha 8 13
+total 1 35
