@@ -28,7 +28,7 @@ if mod(size(a,2),2) == 1, a(:,end+1) = a(:,end); end;
 w = blackmanharris(size(a,2))';
 meana = mean(a,2);
 a = a - repmat(mean(a,2), [1 size(a,2) 1]);
-a = a.*repmat(resphape(w, 1, length(w)), [size(a,1) 1 size(a,3)]);
+a = a.*repmat(reshape(w, 1, length(w)), [size(a,1) 1 size(a,3)]);
 
 % run FFT
 % -------
