@@ -10,4 +10,6 @@ Testing files:
 
 # Version history:
 
+v1.1 - fix window size issue when computing spectral decomposition
+
 v1.0 - initial release 
