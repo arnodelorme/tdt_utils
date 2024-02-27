@@ -1,4 +1,63 @@
-function tdtreport(filein, varargin)
+% TDTREPORT - graphic interface to compute Lexicor measures
+%
+% Usage:
+%   >> tdtreport; % pop up window to input arguments
+%   >> tdtreport('file.asc', 'key', val, ...);
+%   >> tdtreport(EEG, 'key', val, ...);
+%
+% Inputs:
+%   'file.asc' - File in the ASCII format
+%   EEG        - Continuous EEGLAB dataset
+%
+% Optional inputs:
+% 'banddefs'      - [cell or string] frequency band definition or text file
+%                   containing frequency band definition. See file 
+%                   'banddef.txt' for an example.
+% 'exportbands    - ['on'|'off'] 'on' will add the band frequency limits in
+%                   addition to the band names to the table header. Default
+%                   is 'on'.
+% 'exporthz'      - ['on'|'off'] 'on' will export values at every single
+%                   frequency output with 1 Hz increment.
+% 'computesd'     - ['on'|'off'] 'on' will compute standard deviation in
+%                   addition to the mean.
+% 'fftlen'        - [float] length of the FFT window in seconds (default is
+%                   1). Note that if the length of the data is not an exact 
+%                   multiplier of the window length, the last partial
+%                   chunck of data is ignored.
+% 'overlap'       - [float] overlap beween windown in seconds (default is 0)
+% 'latency'       - [float] onset of the data in seconds (default is 0 which
+%                   is the beginning).
+% 'duration'      - [float] offset of the data in seconds (default is Inf
+%                   which is the end).
+% 'reorderchannels' - ['on'|'off'] 'on' will reorder channels according to the
+%                   Lexicor convention and only keep Lexicor channels 
+%                   (default is 'off')
+% 'exportlist'    - [cell] list of measures to export. The choices are:
+%                   'FFT Absolute Power (uV Sq)'
+%                   'FFT peak frequencies'
+%                   'FFT Relative Power (%)'
+%                   'FFT peak amplitudes'                 
+%                   'FFT Coherence'
+%                   'FFT Phase Lag (Deg)'
+% 'fileout'       - [string] name of the output file. By default, it is the
+%                   name of the EEG dataset or input file with 'report.tdt'
+%                   added at the end. Enter empty '' if you do not want to
+%                   save any file.
+%
+% Examples:
+%
+% % compute FFT absolute power on the default EEGLAB dataset
+% eeglab cont
+% tdtreport(EEG, 'exportlist', { 'FFT Absolute Power (uV Sq)' });
+%
+% % compute all measures on the default EEGLAB dataset for delta and theta
+% banddefs = { 'delta' 1 4; 'theta' 4 8 };
+% tdtreport(EEG, 'banddefs', banddefs);
+
+% measures.power.mean = EEGepoch.roi.source_roi_power';
+%     eegMeasure.measures.power.labels
+
+function measures = tdtreport(filein, varargin)
 
 % constants
 srate = 250; 
@@ -66,7 +125,7 @@ if nargin < 2
     latency   = str2num(get(findobj(fig, 'tag', 'latency' ), 'string'));
     duration  = str2num(get(findobj(fig, 'tag', 'duration'), 'string'));
     
-    options = { 'exportlist' { export_options(listvals) } 'fftlen' fftlen 'overlap' overlap };
+    options = { 'exportlist' export_options(listvals) 'fftlen' fftlen 'overlap' overlap };
     if ~valbdexp, options = { options{:} 'exportbands' 'off' }; end
     if ~valhzexp, options = { options{:} 'exporthz'    'off' }; end
     if get(findobj(fig, 'tag', 'computesd'), 'value') == 1
@@ -84,30 +143,30 @@ if nargin < 2
         end
     end
     bands = reshape(bands, 3, 12)';
-    options = { options{:} 'banddefs' { bands } };
+    options = { options{:} 'banddefs' bands };
     close(fig);
 elseif ~isstr(filein)
     fig = filein;
     command = varargin{1};
 
-    switch command
-        case 'loadbands'
-            filename = varargin{2};
-            if isempty(filename)
-                filename = 'banddef.txt';
-            end
-            bands = myloadband(filename);
+    if ischar(varargin{1}) && strcmpi(varargin{1}, 'loadbands')
+        filename = varargin{2};
+        if isempty(filename)
+            filename = 'banddef.txt';
+        end
+        bands = myloadband(filename);
 
-            % write bands to GUI
-            bands{13,1} = [];
-            bands = bands(1:12,:);
-            bands = bands';
-            for index = 1:length(bands(:))
-                obj = findobj(fig, 'tag', [ 'edit' int2str(index) ]);
-                set(obj, 'string', num2str(bands{index}));
-            end
+        % write bands to GUI
+        bands{13,1} = [];
+        bands = bands(1:12,:);
+        bands = bands';
+        for index = 1:length(bands(:))
+            obj = findobj(fig, 'tag', [ 'edit' int2str(index) ]);
+            set(obj, 'string', num2str(bands{index}));
+        end
+        return;
     end
-    return;
+    options = varargin;
 else
     options = varargin;
 end
@@ -115,18 +174,26 @@ end
 % decode arguments
 opt = struct;
 if ~isempty(options)
+    for iOpt = 1:length(options)
+        if iscell(options{iOpt})
+            options{iOpt} = {options{iOpt}};
+        end
+    end
     try   opt = struct(options{:});
     catch error('Wrong ''key'', val, sequence');
     end
 end
-defaultopt.banddefs    = myloadband('banddef.txt');
+vachan = false;
+defaultopt.banddefs    = 'banddef.txt';
 defaultopt.exportbands = 'on';
 defaultopt.exporthz    = 'on';
 defaultopt.computesd   = 'off';
 defaultopt.fftlen      = 1;
 defaultopt.overlap     = 0;
+defaultopt.fileout     = 'auto';
 defaultopt.latency     = 0;
 defaultopt.duration    = Inf;
+defaultopt.reorderchannels = fastif(vachan, 'on', 'off');
 defaultopt.exportlist  = export_options;
 fieldsopt   = fieldnames(defaultopt);
 errorfields = setdiff(fieldnames(opt), fieldsopt);
@@ -135,6 +202,9 @@ for i=1:length(fieldsopt)
     if ~isfield(opt, fieldsopt{i}), opt = setfield(opt, fieldsopt{i}, getfield(defaultopt, fieldsopt{i})); end
 end
 if isstr(opt.exportlist), opt.exportlist = { opt.exportlist }; end
+if ischar(opt.banddefs)
+    opt.banddefs = myloadband(opt.banddefs);
+end
 
 % load the data file
 % ------------------
@@ -155,16 +225,21 @@ else
     tmpdata = EEG.data;
     chans   = { EEG.chanlocs.labels };
 end
+if isequal(opt.fileout, 'auto')
+    [tmpp, fileout] = fileparts(filein);
+    opt.fileout = [ fileout '_report.tdt' ];
+    opt.fileout = fullfile(tmpp, opt.fileout);
+end
 
 % reorder channels the lexicor way (some channels may be missing)
 % ---------------------------------------------------------------
-if vachan
+if strcmpi(defaultopt.reorderchannels, 'on')
     disp('Reordering channels...')
     [~, b, c]  = intersect(lower(chans), lower(channel_order));
     [~, cc] = sort(c);
     neworder = b(cc);
     if length(neworder) < length(chans)
-        disp('Warning: some channels were not found');
+        disp('Warning: some Lexicor channels were not found');
     end
     chans    = chans( neworder );
     tmpdata = tmpdata(neworder,:);
@@ -199,62 +274,64 @@ tmpdata = newdata;
 
 % generate values for file report
 % -------------------------------
-[tmpp, fileout, ext] = fileparts(filein);
-fileOutTmp = [ fileout '_report.tdt' ];
-fid = fopen(fullfile(tmpp, fileOutTmp), 'w');
-fprintf('Writing file %s\n', fullfile(tmpp, fileOutTmp))
-if fid == -1, return; end
-fprintf(fid, '\n'); % important to topo_neuroguide
-
+if ~isempty(opt.fileout)
+    fid = fopen(opt.fileout, 'w');
+    fprintf('Writing file %s\n', opt.fileout)
+    if fid == -1, return; end
+    fprintf(fid, '\n'); % important to topo_neuroguide
+else
+    fid = NaN;
+end
 f_hz = strcmpi(opt.exporthz, 'on'); 
 f_bd = strcmpi(opt.exportbands, 'on'); 
 f_sd = strcmpi(opt.computesd, 'on');
+measures = [];
 for index = 1:length(opt.exportlist)
     switch opt.exportlist{index}
         case 'FFT Absolute Power (uV Sq)'
             [magval, freqs, bandvals, bandsd]  = fftamplitude(tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        myprintf(fid, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
-            if f_bd,        myprintf(fid, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
+            if f_hz,        myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_bd,        myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
         case 'FFT Relative Power (%)'        
             [magval, freqs, bandvals, bandsd]  = fftmagnitude(tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        myprintf(fid, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
-            if f_bd,        myprintf(fid, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
+            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_bd,        measures = myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
         case 'FFT Coherence'
             if strcmpi(opt.exporthz,    'on')
                 [lexcoh, freqs, lexstd ] = lexcoherence(tmpdata, srate);
                 if ~f_sd, lexstd = []; end
-                myprintfcoh(fid, opt.exportlist{index}, lexcoh, lexstd, chans, freqs); 
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexcoh, lexstd, chans, freqs); 
             end
             if strcmpi(opt.exportbands, 'on')
                 [lexcoh, freqs, lexstd ] = lexcoherence(tmpdata, srate, banddefs);
                 if ~f_sd, lexstd = []; end
-                myprintfcoh(fid, opt.exportlist{index}, lexcoh, lexstd, chans, opt.banddefs); 
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexcoh, lexstd, chans, opt.banddefs); 
             end
         case 'FFT Phase Lag (Deg)' 
             if strcmpi(opt.exporthz,    'on')
                 [lexphaseres,freqs] = lexphase(tmpdata, srate);
-                myprintfcoh(fid, opt.exportlist{index}, lexphaseres, [], chans, freqs); 
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexphaseres, [], chans, freqs); 
             end
             if strcmpi(opt.exportbands, 'on')
                 lexphaseres = lexphase(tmpdata, srate, banddefs);
-                myprintfcoh(fid, opt.exportlist{index}, lexphaseres, [], chans, opt.banddefs); 
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexphaseres, [], chans, opt.banddefs); 
             end
         case 'FFT peak frequencies' 
             [magval, freqs, bandvals, bandsd] = fftpeakfreq( tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        myprintf(fid, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
-            if f_bd,        myprintf(fid, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
+            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_bd,        measures = myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
         case 'FFT peak amplitudes' 
             [magval, freqs, bandvals, bandsd] = fftpeakamp(  tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        myprintf(fid, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
-            if f_bd,        myprintf(fid, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
+            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_bd,        measures = myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
     end
 end
 disp('Done.')
@@ -268,9 +345,21 @@ function str = myloadband(filename)
     
 % write into file
 % ---------------
-function myprintf(fid, arraytitle, values, valuestd, elecs, bands)
+function measures = myprintf(fid, measures, arraytitle, values, valuestd, elecs, bands)
 
+    if isnan(fid), return; end
     fprintf(fid, '%s\n\n', arraytitle); % print title
+
+    tmpField = rename_field(arraytitle);
+    measures.(tmpField).mean    = values;
+    measures.(tmpField).labels  = elecs;
+    measures.(tmpField).labels2 = bands(:,1)';
+
+    if ~isempty(valuestd)
+        measures.([ tmpField '_std' ]).mean    = valuestd;
+        measures.([ tmpField '_std' ]).labels  = elecs;
+        measures.([ tmpField '_std' ]).labels2 = bands(:,1)';
+    end
 
     % print header line
     % -----------------
@@ -316,13 +405,25 @@ function myprintf(fid, arraytitle, values, valuestd, elecs, bands)
 
 % write into file
 % ---------------
-function myprintfcoh(fid, arraytitle, values, valstd, elecs, bands)
+function measures = myprintfcoh(fid, measures, arraytitle, values, valstd, elecs, bands)
 
+    if isnan(fid), return; end
     fprintf(fid, '%s\n\n', arraytitle); % print title
     if size(bands,1) > size(values,3)
         bands = bands(1:size(values,3),:);
     end
     
+    tmpField = rename_field(arraytitle);
+    measures.(tmpField).mean    = values;
+    measures.(tmpField).labels  = elecs;
+    measures.(tmpField).labels2 = bands(:,1)';
+
+    if ~isempty(valstd)
+        measures.([ tmpField '_std' ]).mean    = valstd;
+        measures.([ tmpField '_std' ]).labels  = elecs;
+        measures.([ tmpField '_std' ]).labels2 = bands(:,1)';
+    end
+
     % print header line
     % -----------------
     if iscell(bands)
@@ -366,3 +467,14 @@ function myprintfcoh(fid, arraytitle, values, valstd, elecs, bands)
         end
     end
     fprintf(fid, '\n'); % final traler line
+
+% rename title so it can fit in a structure
+function str = rename_field(str)
+
+    str(str == '(') = [];
+    str(str == ')') = [];
+    str(str == ' ') = '_';
+    if any(str == '%')
+        str(str == '%') = '';
+        str = [ str 'percent' ];
+    end
