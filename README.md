@@ -10,6 +10,8 @@ Testing files:
 
 # Version history:
 
+v1.2 - adding documentation and fileout option to tdtreport.m
+
 v1.1 - fix window size issue when computing spectral decomposition
 
 v1.0 - initial release 

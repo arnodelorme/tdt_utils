@@ -1,9 +1,9 @@
 % TDTREPORT - graphic interface to compute Lexicor measures
 %
 % Usage:
-%   >> tdtreport; % pop up window to input arguments
-%   >> tdtreport('file.asc', 'key', val, ...);
-%   >> tdtreport(EEG, 'key', val, ...);
+%   >> measures = tdtreport; % pop up window to input arguments
+%   >> measures = tdtreport('file.asc', 'key', val, ...);
+%   >> measures = tdtreport(EEG, 'key', val, ...);
 %
 % Inputs:
 %   'file.asc' - File in the ASCII format
@@ -43,6 +43,11 @@
 %                   name of the EEG dataset or input file with 'report.tdt'
 %                   added at the end. Enter empty '' if you do not want to
 %                   save any file.
+% 'measuresin'    - [struct] input measure structure where the new measures
+%                   from this function are concatenated. Default is empty.
+%
+% Output:
+%   measures  - [struct] structure containing all the output measures
 %
 % Examples:
 %
@@ -53,9 +58,6 @@
 % % compute all measures on the default EEGLAB dataset for delta and theta
 % banddefs = { 'delta' 1 4; 'theta' 4 8 };
 % tdtreport(EEG, 'banddefs', banddefs);
-
-% measures.power.mean = EEGepoch.roi.source_roi_power';
-%     eegMeasure.measures.power.labels
 
 function measures = tdtreport(filein, varargin)
 
@@ -193,6 +195,7 @@ defaultopt.overlap     = 0;
 defaultopt.fileout     = 'auto';
 defaultopt.latency     = 0;
 defaultopt.duration    = Inf;
+defaultopt.measuresin  = [];
 defaultopt.reorderchannels = fastif(vachan, 'on', 'off');
 defaultopt.exportlist  = export_options;
 fieldsopt   = fieldnames(defaultopt);
@@ -285,7 +288,7 @@ end
 f_hz = strcmpi(opt.exporthz, 'on'); 
 f_bd = strcmpi(opt.exportbands, 'on'); 
 f_sd = strcmpi(opt.computesd, 'on');
-measures = [];
+measures = opt.measuresin;
 for index = 1:length(opt.exportlist)
     switch opt.exportlist{index}
         case 'FFT Absolute Power (uV Sq)'
@@ -347,22 +350,22 @@ function str = myloadband(filename)
 % ---------------
 function measures = myprintf(fid, measures, arraytitle, values, valuestd, elecs, bands)
 
-    if isnan(fid), return; end
-    fprintf(fid, '%s\n\n', arraytitle); % print title
-
-    tmpField = rename_field(arraytitle);
+    tmpField = rename_field(arraytitle, bands);
     measures.(tmpField).mean    = values;
     measures.(tmpField).labels  = elecs;
-    measures.(tmpField).labels2 = bands(:,1)';
+    measures.(tmpField).labels2 = bands2str(bands);
 
     if ~isempty(valuestd)
         measures.([ tmpField '_std' ]).mean    = valuestd;
         measures.([ tmpField '_std' ]).labels  = elecs;
-        measures.([ tmpField '_std' ]).labels2 = bands(:,1)';
+        measures.([ tmpField '_std' ]).labels2 = bands2str(bands);
     end
+
+    if isnan(fid), return; end
 
     % print header line
     % -----------------
+    fprintf(fid, '%s\n\n', arraytitle); % print title
     if iscell(bands)
         fprintf('Writing to file "%s" (freq. band values)\n', arraytitle)
         for band = 1:size(bands,1)
@@ -407,25 +410,29 @@ function measures = myprintf(fid, measures, arraytitle, values, valuestd, elecs,
 % ---------------
 function measures = myprintfcoh(fid, measures, arraytitle, values, valstd, elecs, bands)
 
-    if isnan(fid), return; end
-    fprintf(fid, '%s\n\n', arraytitle); % print title
     if size(bands,1) > size(values,3)
         bands = bands(1:size(values,3),:);
     end
     
-    tmpField = rename_field(arraytitle);
-    measures.(tmpField).mean    = values;
-    measures.(tmpField).labels  = elecs;
-    measures.(tmpField).labels2 = bands(:,1)';
-
-    if ~isempty(valstd)
-        measures.([ tmpField '_std' ]).mean    = valstd;
-        measures.([ tmpField '_std' ]).labels  = elecs;
-        measures.([ tmpField '_std' ]).labels2 = bands(:,1)';
+    tmpBand = bands2str(bands);
+    for iBand = 1:length(tmpBand)
+        tmpField = [ rename_field(arraytitle, bands) '_' tmpBand{iBand} ];
+        measures.(tmpField).mean    = values(:,:,iBand);
+        measures.(tmpField).labels  = elecs;
+        measures.(tmpField).labels2 = elecs;
+    
+        if ~isempty(valstd)
+            measures.([ tmpField '_std' ]).mean    = valstd(:,:,iBand);
+            measures.([ tmpField '_std' ]).labels  = elecs;
+            measures.([ tmpField '_std' ]).labels2 = elecs;
+        end
     end
+
+    if isnan(fid), return; end
 
     % print header line
     % -----------------
+    fprintf(fid, '%s\n\n', arraytitle); % print title
     if iscell(bands)
         fprintf('Writing to file "%s" (freq. band values)\n', arraytitle)
         fprintf(fid, '\t');
@@ -469,7 +476,7 @@ function measures = myprintfcoh(fid, measures, arraytitle, values, valstd, elecs
     fprintf(fid, '\n'); % final traler line
 
 % rename title so it can fit in a structure
-function str = rename_field(str)
+function str = rename_field(str, bands)
 
     str(str == '(') = [];
     str(str == ')') = [];
@@ -477,4 +484,17 @@ function str = rename_field(str)
     if any(str == '%')
         str(str == '%') = '';
         str = [ str 'percent' ];
+    end
+    if isnumeric(bands)
+        str = [ str '_allfreqs' ];
+    end
+
+function cellstr = bands2str(bands)
+
+    if isnumeric(bands)
+        for iBand = 1:length(bands)
+            cellstr{iBand} = sprintf('%dHz', bands(iBand));
+        end
+    else
+        cellstr = bands(:,1)';
     end
