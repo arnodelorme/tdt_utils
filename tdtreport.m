@@ -224,6 +224,7 @@ if ~isstruct(filein)
     end
 else
     EEG = filein;
+    EEG = pop_resample(EEG, srate);
     filein = fullfile(EEG.filepath, EEG.filename);
     tmpdata = EEG.data;
     chans   = { EEG.chanlocs.labels };
