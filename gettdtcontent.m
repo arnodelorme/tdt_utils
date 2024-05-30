@@ -5,7 +5,7 @@
 % suballchoices  - sub choice in Hz or freq. band
 % allchoicesfull - same as allchoices with "by hz increment" or "by freq. band" text at the end
 
-function [ fileinfo, allchoices, suballchoices, allchoicesfull ] = gettdtcontent(filename, choice, subchoice);
+function [ fileinfo, allchoices, suballchoices, allchoicesfull ] = gettdtcontent(filename)
 
     % find title
     % ----------
@@ -26,7 +26,6 @@ function [ fileinfo, allchoices, suballchoices, allchoicesfull ] = gettdtcontent
                 if ~isempty(ind), break; end
             end
             if isempty(ind)
-                fseek(fid, -1, 0); % one character back
                 break;
             else
                 if ~isempty(findstr('Reliability:', tmpline))
@@ -77,6 +76,7 @@ function [ fileinfo, allchoices, suballchoices, allchoicesfull ] = gettdtcontent
                         fprintf('Possible choice: "%s by freq. bands"\n' , allchoices{count});
                     else
                         fprintf('Possible choice: "%s"\n' , allchoices{count});
+                        suballchoices{count} = [];
                     end
                 end
                 

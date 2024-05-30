@@ -37,12 +37,26 @@ function [alldat, allstd, elec, subchoice, filetmp] = gettdtdata(filename, choic
                 % get the actual data
                 % -------------------
                 if strcmpi(choice, filechoice)
-                    if ~isempty(subchoice{1})
+                    if isempty(subchoice{1})
+                        fprintf('No sub choice, not reading anything\n');
+                        if contains(choice, 'Traumatic')
+                            allstd = {};
+                            for indT = 1:3
+                                res = textscan(tmpline, '%s', 'delimiter', char(9));
+                                elec{indT,1} = res{1}{1};
+                                alldat(indT,1) = str2double(res{1}{2});
+                                if indT < 3
+                                    tmpline = fgetl(fid);
+                                    tmpline = fgetl(fid);
+                                end
+                            end
+                        end
+                    else
                         
                         % the line below allows to choose Hz versus Bands
                         % if the result is empty then the test afterward
                         % allows to continue the search
-                        [tmp, inds] = intersect(subfilechoice, subchoice);
+                        [~, inds] = intersect(subfilechoice, subchoice);
                         inds = sort(inds);
                         
                         if length(inds) == length(subchoice)
