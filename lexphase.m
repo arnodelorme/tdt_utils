@@ -1,6 +1,23 @@
-% Function to compute lexphase
+% LEXPHASE - Function to compute lexicor phase. See validation script
+%            test_lexicor_phase (the matching with Lexicor is not perfect)
+%
+% Usage:
+%  [lexcoh, freq] = lexphase(data,srate,bands,outputFormat)
+%
+% Inputs:
+%    data      - [channel x sample] data array
+%    srate     - [number] sampling rate in Hz
+%    bands     - [array] frequency bands, e.g. [4 6; 8 12] (theta and alpha)
+%    outputFormat - [string] Output format
+%                          'percent' for percentage (0 to 100) default
+%                          'deg'     for degrees
+%                          'rad'     for radians
+%                          'ms'      for milliseconds
+% Outputs:
+%    lexcoh  - [channel x channel x frequencies] output matrix
+%    freq    - [array] frequency array
 
-function [lexcoh, f] = lexphase(a,srate,bands)
+function [lexcoh, f] = lexphase(a,srate,bands,outputFormat)
 
 if size(a,1) < 2
     error('Need at least two channels');
@@ -10,8 +27,11 @@ end
 amp = abs(r);
 r   = angle(r);
 
-if nargin < 3
+if nargin < 3 || isempty(bands)
     bands = [ f(1:end); f(1:end)+1 ]';
+end
+if nargin < 4
+    outputFormat = 'percent';
 end
 
 lexcoh = zeros(size(r,1), size(r,1), size(bands,1));
@@ -27,16 +47,26 @@ for ind = 1:size(bands,1)
                 [~, fInd] = max( amp(ind1,fmin:fmax,t));
                 fInd = fmin+fInd-1;
 
-                phase1 = r(ind1,fInd,t); if(phase1<0.0) phase1=6.28318+phase1; end
-                phase2 = r(ind2,fInd,t); if(phase2<0.0) phase2=6.28318+phase2; end
+                phase1 = r(ind1,fInd,t); if(phase1<0.0) phase1=2*pi+phase1; end
+                phase2 = r(ind2,fInd,t); if(phase2<0.0) phase2=2*pi+phase2; end
 
                 phaseval=phase1-phase2;
                 phaseval=abs(phaseval);
-                ftemp=abs(phaseval-6.28318);
+                ftemp=abs(phaseval-2*pi);
                 if(ftemp<phaseval) phaseval=ftemp; end;
             
-                phaseval=mod(abs(phaseval),3.14159);
-                phase(t)=100.0*(1.0-abs(phaseval/3.14159));
+                phaseval=mod(abs(phaseval),pi);
+                if strcmpi(outputFormat, 'deg')
+                    phase(t) = phaseval/pi*180;
+                elseif strcmpi(outputFormat, 'rad')
+                    phase(t) = phaseval;
+                elseif strcmpi(outputFormat, 'percent')
+                    phase(t)=100.0*(1.0-abs(phaseval/pi));
+                elseif strcmpi(outputFormat, 'ms')
+                    phase(t) = phaseval / (2*pi) / ( (fmin+fmax)/2 ) * 1000;
+                else
+                    error('Unknown format')
+                end
             end
             lexcoh(ind2,ind1,ind) = mean(phase);
         end

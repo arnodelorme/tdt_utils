@@ -18,6 +18,9 @@
 %                   is 'on'.
 % 'exporthz'      - ['on'|'off'] 'on' will export values at every single
 %                   frequency output with 1 Hz increment.
+% 'freqlim'       - [min max] frequency limits (inclusive) for exporting
+%                   values at every single frequency. Default if 0 to
+%                   niquist.
 % 'computesd'     - ['on'|'off'] 'on' will compute standard deviation in
 %                   addition to the mean.
 % 'fftlen'        - [float] length of the FFT window in seconds (default is
@@ -192,6 +195,7 @@ defaultopt.exporthz    = 'on';
 defaultopt.computesd   = 'off';
 defaultopt.fftlen      = 1;
 defaultopt.overlap     = 0;
+defaultopt.freqlim     = [];
 defaultopt.fileout     = 'auto';
 defaultopt.latency     = 0;
 defaultopt.duration    = Inf;
@@ -296,19 +300,19 @@ for index = 1:length(opt.exportlist)
             [magval, freqs, bandvals, bandsd]  = fftamplitude(tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_hz,        myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs, opt.freqlim); end
             if f_bd,        myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
         case 'FFT Relative Power (%)'        
             [magval, freqs, bandvals, bandsd]  = fftmagnitude(tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs, opt.freqlim); end
             if f_bd,        measures = myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
         case 'FFT Coherence'
             if strcmpi(opt.exporthz,    'on')
                 [lexcoh, freqs, lexstd ] = lexcoherence(tmpdata, srate);
                 if ~f_sd, lexstd = []; end
-                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexcoh, lexstd, chans, freqs); 
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexcoh, lexstd, chans, freqs, opt.freqlim); 
             end
             if strcmpi(opt.exportbands, 'on')
                 [lexcoh, freqs, lexstd ] = lexcoherence(tmpdata, srate, banddefs);
@@ -317,24 +321,33 @@ for index = 1:length(opt.exportlist)
             end
         case 'FFT Phase Lag (Deg)' 
             if strcmpi(opt.exporthz,    'on')
-                [lexphaseres,freqs] = lexphase(tmpdata, srate);
-                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexphaseres, [], chans, freqs); 
+                [lexphaseres,freqs] = lexphase(tmpdata, srate, [], 'deg');
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexphaseres, [], chans, freqs, opt.freqlim); 
             end
             if strcmpi(opt.exportbands, 'on')
-                lexphaseres = lexphase(tmpdata, srate, banddefs);
+                lexphaseres = lexphase(tmpdata, srate, banddefs, 'deg');
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexphaseres, [], chans, opt.banddefs); 
+            end
+        case 'FFT Phase Lag (ms)' 
+            if strcmpi(opt.exporthz,    'on')
+                [lexphaseres,freqs] = lexphase(tmpdata, srate, [], 'ms');
+                measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexphaseres, [], chans, freqs, opt.freqlim); 
+            end
+            if strcmpi(opt.exportbands, 'on')
+                lexphaseres = lexphase(tmpdata, srate, banddefs, 'ms');
                 measures = myprintfcoh(fid, measures, opt.exportlist{index}, lexphaseres, [], chans, opt.banddefs); 
             end
         case 'FFT peak frequencies' 
             [magval, freqs, bandvals, bandsd] = fftpeakfreq( tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs, opt.freqlim); end
             if f_bd,        measures = myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
         case 'FFT peak amplitudes' 
             [magval, freqs, bandvals, bandsd] = fftpeakamp(  tmpdata, srate, banddefs);
             if f_sd, stdmagvals = std(magval,[],3); else stdmagvals = []; end
             if f_sd, stdbdvals  = bandsd';          else stdbdvals  = []; end
-            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs); end
+            if f_hz,        measures = myprintf(fid, measures, opt.exportlist{index}, mean(magval,3), stdmagvals, chans, freqs, opt.freqlim); end
             if f_bd,        measures = myprintf(fid, measures, opt.exportlist{index}, bandvals'     , stdbdvals,  chans, opt.banddefs); end
     end
 end
@@ -349,7 +362,18 @@ function str = myloadband(filename)
     
 % write into file
 % ---------------
-function measures = myprintf(fid, measures, arraytitle, values, valuestd, elecs, bands)
+function measures = myprintf(fid, measures, arraytitle, values, valuestd, elecs, bands, freqlim)
+
+    % select subset of frequencies
+    if nargin > 7 && ~isempty(freqlim)
+        fmin = find(bands >= freqlim(1)); fmin = fmin(1); % inclusive lower edge
+        fmax = find(bands <= freqlim(2)); fmax = fmax(end); % inclusive higher edge
+        bands = bands(fmin:fmax);
+        values = values(:,fmin:fmax);
+        if ~isempty(valuestd)
+            valuestd = valuestd(:,fmin:fmax);
+        end
+    end
 
     tmpField = rename_field(arraytitle, bands);
     measures.(tmpField).mean    = values;
@@ -409,7 +433,18 @@ function measures = myprintf(fid, measures, arraytitle, values, valuestd, elecs,
 
 % write into file
 % ---------------
-function measures = myprintfcoh(fid, measures, arraytitle, values, valstd, elecs, bands)
+function measures = myprintfcoh(fid, measures, arraytitle, values, valstd, elecs, bands, freqlim)
+
+    % select subset of frequencies
+    if nargin > 7 && ~isempty(freqlim)
+        fmin = find(bands >= freqlim(1)); fmin = fmin(1); % inclusive lower edge
+        fmax = find(bands <= freqlim(2)); fmax = fmax(end); % inclusive higher edge
+        bands = bands(fmin:fmax);
+        values = values(:,:,fmin:fmax);
+        if ~isempty(valstd)
+            valstd = valstd(:,:,fmin:fmax);
+        end
+    end
 
     if size(bands,1) > size(values,3)
         bands = bands(1:size(values,3),:);
