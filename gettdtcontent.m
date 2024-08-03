@@ -5,74 +5,88 @@
 % suballchoices  - sub choice in Hz or freq. band
 % allchoicesfull - same as allchoices with "by hz increment" or "by freq. band" text at the end
 
-function [ fileinfo allchoices suballchoices allchoicesfull ] = gettdtcontent(filename, choice, subchoice);
+function [ fileinfo, allchoices, suballchoices, allchoicesfull ] = gettdtcontent(filename)
 
     % find title
     % ----------
     fields = { 'name' 'subject_id' 'dob' 'age' 'gender' 'handedness' 'eeg_id' ...
-               'date' 'time' 'technician' 'doctor' 'medication' 'epochlen' };	
+               'date' 'time' 'eyescondition' 'technician' 'doctor' 'clinician' 'medication' 'recordlen'  'editlen' 'epochlen' 'sampling_rate' 'collection_hardware' 'reliability' };	
     fieldtitle = { 'Name:' 'Subject ID:' 'Date of Birth:' 'Age:' 'Gender:' ...
-        'Handedness:' 'EEG ID:' 'Date of Test:'	'Time of Test:'	'Technician:' ...
-        'Doctor:' 'Medication:'	'Epoch Length (sec):' };
-    count = 1;
-    skip  = 0;
+        'Handedness:' 'EEG ID:' 'Date of Test:'	'Time of Test:'	'Eyes Condition:' 'Technician:' ...
+        'Doctor:' 'Clinician:' 'Medication:'	'Record Length:' 'Edit Length:' 'Epoch Length (sec):' 'Sampling Rate:' 'Collection Hardware:' 'Reliability:' };
     fileinfo = [];
+    fileinfo.epochlen = '1';
     fid = fopen(filename, 'r');
-    if fid == -1, error(['Cannot open file ' filename]); end;
-    while count <= length(fields) & ~feof(fid)
+    if fid == -1, error(['Cannot open file ' filename]); end
+    while ~feof(fid)
         tmpline = fgetl(fid);
         if ~isempty(tmpline)
-            ind = findstr(fieldtitle{count}, tmpline);
-            if isempty(ind),
-                warning('No header or invalid header');
-                fileinfo.epochlen = '1';
-                fseek(fid, 0, -1);
+            for iField = 1:length(fieldtitle)
+                ind = findstr(fieldtitle{iField}, tmpline);
+                if ~isempty(ind), break; end
+            end
+            if isempty(ind)
                 break;
-            end;
-            fileinfo = setfield( fileinfo, fields{count}, tmpline(length(fieldtitle{count})+1:end));
-            count = count+1;
-        end;
-        skip = skip+1;
-    end;
+            else
+                if ~isempty(findstr('Reliability:', tmpline))
+                    % multi line special case
+                    str = tmpline;
+                    tmpline = 'xxx';
+                    while ~isempty(tmpline)
+                        tmpline = fgetl(fid);
+                        str = strvcat(str, tmpline);
+                    end
+                    fileinfo = setfield( fileinfo, fields{iField}, str);
+                else
+                    fileinfo = setfield( fileinfo, fields{iField}, tmpline(length(fieldtitle{iField})+1:end));
+                end
+            end
+        end
+    end
     fileinfo.epochlen = num2str(fileinfo.epochlen);
     
+    % check readability
+
     % search for strings
     % ------------------
-    shownextline = 0;
-    nblines      = 0;
+    shownextline = 1;
     count        = 1;
     while ~feof(fid)
-        tmpline = fgetl(fid); % read one line
-        nblines = nblines+1;
-        if shownextline & nblines > 0 & ~isempty(tmpline)
-            if tmpline(1) ~= 9
+        if count > 1
+            tmpline = fgetl(fid); % read one line
+        end
+        if shownextline && ~isempty(tmpline)
+            if tmpline(1) ~= 9 && ~contains(tmpline, 'TBI')
                 allchoices{count} = tmpline;
                 tmpline = fgetl(fid);
-                if isempty(tmpline), tmpline = fgetl(fid); end;
+                if isempty(tmpline), tmpline = fgetl(fid); end
                 strs = strread(tmpline,'%s','delimiter',char(9))';
                 if ~isempty(strs)
-                    if isempty(strs{1}), strs(1) = []; end;
-                    if isempty(strs{1}), strs(1) = []; end;
-                end;
+                    if isempty(strs{1}), strs(1) = []; end
+                    if isempty(strs{1}), strs(1) = []; end
+                end
                 suballchoices{count} = strs;
                 
                 if ~isempty(findstr('hz', lower(tmpline)))
-                     allchoicesfull{count} = [ allchoices{count} ' by Hz increment' ];
-                else allchoicesfull{count} = [ allchoices{count} ' by freq. bands' ];
-                end;
-                if ~isempty(findstr('hz', lower(tmpline)))
-                     fprintf('Possible choice: "%s by Hz increment"\n', allchoices{count});
-                else fprintf('Possible choice: "%s by freq. bands"\n' , allchoices{count});
-                end;
-                
+                    allchoicesfull{count} = [ allchoices{count} ' by Hz increment' ];
+                    fprintf('Possible choice: "%s by Hz increment"\n', allchoices{count});
+                else
+                    if ~contains(allchoices{count}, 'Traumatic Brain Injury')
+                        allchoicesfull{count} = [ allchoices{count} ' by freq. bands' ];
+                        fprintf('Possible choice: "%s by freq. bands"\n' , allchoices{count});
+                    else
+                        fprintf('Possible choice: "%s"\n' , allchoices{count});
+                        suballchoices{count} = [];
+                    end
+                end
                 
                 count = count+1;
-            end;
+            end
             shownextline = 0;
-        end;
+        end
         if isempty(tmpline)
             shownextline = 1;
-        end;
-    end;
+        end
+    end
     fclose(fid);
         
