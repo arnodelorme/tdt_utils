@@ -1,6 +1,6 @@
 # TDT utils
 
-This EEGLAB plugin allows the computation of measures provided by the Lexicor Neurofeedback company. It is a valuable resource for Neurofeedback users. Please note that the Lexicor TDT data format is also compatible with the Neuroguide format. Therefore, this plugin can also replot measures computed using Neuroguide.
+This EEGLAB plugin allows the computation of measures provided by the defunct Lexicor Neurofeedback company. The MATLAB functions have been programmed to match (as close as possible) Lexicor output. As such, it is a valuable resource for Neurofeedback users. Please note that the Lexicor TDT data format is compatible with the Neuroguide TDT format. Therefore, this plugin can also replot measures computed using Neuroguide.
 
 Thanks to Robert Lawson from EEGWorks for his assistance in the development of these tools.
 
