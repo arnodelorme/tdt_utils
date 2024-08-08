@@ -22,8 +22,7 @@ Testing files:
 
 ![](https://github.com/user-attachments/assets/b4645b71-9c93-43ce-85d2-71768742c8e8)
 
-![](https://github.com/user-attachments/assets/9cbb3c8a-87f4-43d8-8663-a5f4034679b5)
-
+![](https://github.com/user-attachments/assets/9a65e084-bee0-4c20-b6b7-45b56620e8ae)
 
 # Version history:
 
