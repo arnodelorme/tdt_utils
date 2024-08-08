@@ -26,20 +26,21 @@ Once the measures have been computed, they may be plotted. Use menu item **Tools
 
 ![Screenshot 2024-08-07 at 19 12 44](https://github.com/user-attachments/assets/54016e3f-08d5-4295-9489-b9493dec3504)
 
-Select the first 10 values, and press the ">>" button, then select the **Cool** colormap and press the **Generate plot** button. The following graphics will pop up.
+Select the first 10 values, and press the ">>" button, then select the **Cool** colormap and press the **Generate plot** button. The following graphics will pop up. Note that the file will automatically be saved to disk.
 
 ![Screenshot 2024-08-07 at 19 13 26](https://github.com/user-attachments/assets/4dd81840-fe7b-4a30-a33f-82f29db83a94)
 
+Now, call back menu item **Tools > Create/plot TDT files > Plot measures from TDT text files** and select the first 10 frequencies as well as a 0.95 threshold.
 
+![Screenshot 2024-08-07 at 19 22 48](https://github.com/user-attachments/assets/10d451da-20e5-4b20-a71c-e464102fa35e)
 
+The following plot will pop up. Note that the scale on top might not reflect actual coherence values.
 
-# Screen captures
+![Screenshot 2024-08-07 at 19 23 04](https://github.com/user-attachments/assets/ade851f1-0b89-4943-ba7a-ba350bbc6296)
+
+# Other screen captures
 
 Some of the plots below may require calling the plotting functions from the command line to use options not available in the menus.
-
-## Example of spectral power plot at each frequency
-
-![](https://github.com/user-attachments/assets/6c97df46-5b5b-470e-95b4-8de1baa0beb5)
 
 ## Example of spectral plot in frequency bands
 
