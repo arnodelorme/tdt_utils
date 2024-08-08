@@ -1,3 +1,16 @@
+% TOPO_NEUROGUIDENEW - This function import a TDT file and allow ploting
+%                      measures of interest.
+% 
+% If not enough arguments are provided, it pops up a graphic interface.
+% The first argument is the type of information to plot. Note that the
+% possible choices are provided when calling the function without argument.
+%
+% Note that the function also allow selecting two TDT file to plot the
+% difference between the two files.
+% 
+% For example, 
+% > topo_neuroguidenew('eeglab_data_report.tdt','FFT Absolute Power (uV Sq) by Hz increment');
+
 function topo_neuroguidenew(filename, stringtype, varargin )
 
 if nargin > 1 & nargin < 2,
@@ -142,6 +155,7 @@ end
 % -----------------------------
 if nargin < 2
     fig = hgload('barreportgui2.fig');
+    set(fig, 'name', 'Plot TDT file content');
 
     % load default options
     % --------------------
@@ -253,8 +267,8 @@ else
             tmpdata = tmpdata-tmpdata2;
         end
 
-        data{countline}{countcol}   = tmpdata;
-        datasd{countline}{countcol} = tmpstd;
+        data{countline}{countcol}   = tmpdata(:);
+        datasd{countline}{countcol} = tmpstd(:);
         titles{countline}{countcol} = [ tmpchoice ' at ' subchoicesall{optind(index)} ];
         titlecols{countline}{countcol} = subchoicesall{optind(index)};
     end
@@ -312,7 +326,7 @@ end
 
 if ~contains(lower(tmpchoice), 'coherence') && ~contains(lower(tmpchoice), 'phase')
     str.data  = [ data{:}{:} ];
-    str.data  = reshape(str.data, length(str.data)/length(elec{1}), length(elec{:}))';
+    % str.data  = reshape(str.data, length(str.data)/length(elec{1}), length(elec{:}))';
     str.title = maintitle;
     str.titlecols = { titlecols{:}{:} };
     str.chanlocs  = asc_readloc('chanlocs10-5.ced', elec{1});

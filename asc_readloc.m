@@ -32,13 +32,13 @@ function eloc = asc_readloc(filename, elec_names);
                 eloc(index).X      = template{elecpos, 5};
                 eloc(index).Y      = template{elecpos, 6};
                 eloc(index).Z      = template{elecpos, 7};
-            end;
-        end;
-    end;
+            end
+        end
+    end
     
     % make all electrode inside
     % -------------------------
     maxrad = max([ eloc.radius ]);
     for ind = 1:length(eloc)
         eloc(ind).radius = eloc(ind).radius/maxrad*0.5;
-    end;
+    end
