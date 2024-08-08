@@ -60,10 +60,10 @@ Some of the plots below may require calling the plotting functions from the comm
 
 # Version history:
 
-v1.3 - increase neuroguide compatibility
+v1.3 - Increase neuroguide compatibility. Fix the issue with plotting spectral power (array was transposed). Add documentation.
 
-v1.2 - adding documentation and fileout option to tdtreport.m
+v1.2 - Adding documentation and fileout option to tdtreport.m
 
-v1.1 - fix window size issue when computing spectral decomposition
+v1.1 - Fix window size issue when computing spectral decomposition
 
-v1.0 - initial release 
+v1.0 - Initial release 
