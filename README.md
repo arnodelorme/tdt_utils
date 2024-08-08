@@ -24,11 +24,11 @@ You may also load a file containing your frequency band definition. "Latency" an
 
 Once the measures have been computed, they may be plotted. Use menu item **Tools > Create/plot TDT files > Plot measures from TDT text files**. First, the program will ask you to select a TDT file. The TDT file is being saved in the same folder as the data so it may not be in the current folder. After selecting the TDT file, the following interface will pop up.
 
-![Screenshot 2024-08-07 at 18 44 37](https://github.com/user-attachments/assets/e56732a3-7238-4c16-9814-3e7b2549d7b8)
+![Screenshot 2024-08-07 at 19 12 44](https://github.com/user-attachments/assets/54016e3f-08d5-4295-9489-b9493dec3504)
 
-Select the first 30 values, and press the ">>" button, then select the **Cool** colormap and press the **Generate plot** button. The following graphics will pop up.
+Select the first 10 values, and press the ">>" button, then select the **Cool** colormap and press the **Generate plot** button. The following graphics will pop up.
 
-![Screenshot 2024-08-07 at 18 45 34](https://github.com/user-attachments/assets/af77349e-defc-4c12-962b-a28bd275da0c)
+![Screenshot 2024-08-07 at 19 13 26](https://github.com/user-attachments/assets/4dd81840-fe7b-4a30-a33f-82f29db83a94)
 
 
 
