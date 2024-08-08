@@ -10,15 +10,15 @@ Testing files:
 
 # Screen captures
 
-Example of spectral power plot at each frequency
+## Example of spectral power plot at each frequency
 
 ![](https://github.com/user-attachments/assets/6c97df46-5b5b-470e-95b4-8de1baa0beb5)
 
-Example of spectral plot in frequency bands
+## Example of spectral plot in frequency bands
 
 ![](https://github.com/user-attachments/assets/6919415a-ec8b-42a5-bf20-23b2c26709d4)
 
-Example of coherence plot
+## Example of coherence plot
 
 ![](https://github.com/user-attachments/assets/b4645b71-9c93-43ce-85d2-71768742c8e8)
 
