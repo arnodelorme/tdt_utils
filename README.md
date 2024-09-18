@@ -54,9 +54,51 @@ Some of the plots below may require calling the plotting functions from the comm
 
 # Testing
 
-* test_lexicor_power.m - this compares the output of Lexicor software for power analysis with the output of the MATLAB function in this repository. The correspondence is almost perfect.
+* test_lexicor_power.m - this compares the output of Lexicor software for power analysis with the output of the MATLAB function in this repository. The correspondence is almost perfect (meaning the ratio is close to 1).
 
-* test_lexicor_phase.m - this compares the output of Lexicor software for phase analysis with the output of the MATLAB function in this repository. Note that the correspondence is not perfect. 
+```
+FFT absolute power (LEX amplitude)
+Delta ratio: 0.96 (+-0.01)
+Theta ratio: 1.01 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.00)
+Beta1 ratio: 1.00 (+-0.00)
+Beta2 ratio: 1.00 (+-0.00)
+
+FFT relative power (LEX relative power)
+Delta ratio: 0.96 (+-0.01)
+Theta ratio: 1.00 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.01)
+Beta1 ratio: 1.00 (+-0.01)
+Beta2 ratio: 1.00 (+-0.01)
+
+LEX peak frequency
+Delta ratio: 1.18 (+-0.10)
+Theta ratio: 0.96 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.00)
+Beta1 ratio: 1.00 (+-0.00)
+Beta2 ratio: 1.00 (+-0.00)
+
+LEX peak amplitude
+Delta ratio: 0.94 (+-0.02)
+Theta ratio: 1.01 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.00)
+Beta1 ratio: 1.00 (+-0.00)
+Beta2 ratio: 1.00 (+-0.00)
+```
+
+* test_lexicor_phase.m - this compares the output of Lexicor software for phase analysis with the output of the MATLAB function in this repository. Note that the correspondence is not perfect although it is still quite good.
+
+```
+Theta freq.
+Nb values inferior in lex:99
+Nb values superior in lex:72
+Absolute difference:0.16 +- 0.15
+
+Alpha freq.
+Nb values inferior in lex:67
+Nb values superior in lex:104
+Absolute difference:0.17 +- 0.14
+```
 
 # Version history:
 
