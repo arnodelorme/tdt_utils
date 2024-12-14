@@ -23,6 +23,8 @@
 %                   niquist.
 % 'computesd'     - ['on'|'off'] 'on' will compute standard deviation in
 %                   addition to the mean.
+% 'removezeros'   - ['on'|'off'] 'on' will remove any time sample where  
+%                   the first channel is equal to 0. Default is 'on'.
 % 'fftlen'        - [float] length of the FFT window in seconds (default is
 %                   1). Note that if the length of the data is not an exact 
 %                   multiplier of the window length, the last partial
@@ -194,6 +196,7 @@ vachan = false;
 defaultopt.banddefs    = 'banddef.txt';
 defaultopt.exportbands = 'on';
 defaultopt.exporthz    = 'on';
+defaultopt.removezeros = 'on';
 defaultopt.computesd   = 'off';
 defaultopt.fftlen      = 1;
 defaultopt.overlap     = 0;
@@ -265,6 +268,12 @@ if ~isempty(indempty)
 end
 banddefs = [ opt.banddefs{:,2:end} ];
 banddefs = reshape(banddefs, length(banddefs)/2,2);
+
+% remove zeros
+% ------------
+if strcmpi(opt.removezeros, 'on')
+    tmpdata(:, tmpdata(1,:) == 0) = [];
+end
 
 % extract data
 % ------------
