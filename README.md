@@ -1,6 +1,6 @@
 # TDT utils
 
-This EEGLAB plugin allows the computation of measures provided by the Lexicor Neurofeedback company. It is a valuable resource for Neurofeedback users. Please note that the Lexicor TDT data format is also compatible with the Neuroguide format. Therefore, this plugin can also replot measures computed using Neuroguide.
+This EEGLAB plugin allows the computation of measures provided by the defunct Lexicor Neurofeedback company. The MATLAB functions have been programmed to match (as close as possible) Lexicor output. As such, it is a valuable resource for Neurofeedback users. Please note that the Lexicor TDT data format is compatible with the Neuroguide TDT format. Therefore, this plugin can also replot measures computed using Neuroguide.
 
 Thanks to Robert Lawson from EEGWorks for his assistance in the development of these tools.
 
@@ -54,16 +54,58 @@ Some of the plots below may require calling the plotting functions from the comm
 
 # Testing
 
-* test_lexicor_power.m - this compares the output of Lexicor software for power analysis with the output of the MATLAB function in this repository. The correspondence is almost perfect.
+* test_lexicor_power.m - this compares the output of Lexicor software for power analysis with the output of the MATLAB function in this repository. The correspondence is almost perfect (meaning the ratio is close to 1).
 
-* test_lexicor_phase.m - this compares the output of Lexicor software for phase analysis with the output of the MATLAB function in this repository. Note that the correspondence is not perfect. 
+```
+FFT absolute power (LEX amplitude)
+Delta ratio: 0.96 (+-0.01)
+Theta ratio: 1.01 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.00)
+Beta1 ratio: 1.00 (+-0.00)
+Beta2 ratio: 1.00 (+-0.00)
+
+FFT relative power (LEX relative power)
+Delta ratio: 0.96 (+-0.01)
+Theta ratio: 1.00 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.01)
+Beta1 ratio: 1.00 (+-0.01)
+Beta2 ratio: 1.00 (+-0.01)
+
+LEX peak frequency
+Delta ratio: 1.18 (+-0.10)
+Theta ratio: 0.96 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.00)
+Beta1 ratio: 1.00 (+-0.00)
+Beta2 ratio: 1.00 (+-0.00)
+
+LEX peak amplitude
+Delta ratio: 0.94 (+-0.02)
+Theta ratio: 1.01 (+-0.01)
+Alpha1 ratio: 1.00 (+-0.00)
+Beta1 ratio: 1.00 (+-0.00)
+Beta2 ratio: 1.00 (+-0.00)
+```
+
+* test_lexicor_phase.m - this compares the output of Lexicor software for phase analysis with the output of the MATLAB function in this repository. Note that the correspondence is not perfect although it is still quite good.
+
+```
+Theta freq.
+Nb values inferior in lex:99
+Nb values superior in lex:72
+Absolute difference:0.16 +- 0.15
+
+Alpha freq.
+Nb values inferior in lex:67
+Nb values superior in lex:104
+Absolute difference:0.17 +- 0.14
+```
 
 # Version history:
 
-v1.3 - increase neuroguide compatibility
+v1.3 - Increase neuroguide compatibility. Fix the issue with plotting spectral power (array was transposed). Add documentation.
 
-v1.2 - adding documentation and fileout option to tdtreport.m
+v1.2 - Adding documentation and fileout option to tdtreport.m
 
-v1.1 - fix window size issue when computing spectral decomposition
+v1.1 - Fix window size issue when computing spectral decomposition
 
-v1.0 - initial release 
+v1.0 - Initial release 
